@@ -27,13 +27,7 @@
  
  */
 
-// Constants
-const int INIT_JUMP = 766;     //jump = 360;
-const int INIT_WALK = 736;     //walk = 400;
-const int INIT_GRAVITY = 3090; //gravity = 720;
-const int FRICTION = 400;
-
-Player::Player(PlatformManager* pPlatManager): GameObject()
+Player::Player(PlatformManager& rPlatManager)
 {	
     
 	//Initialise the player offsets
@@ -48,15 +42,42 @@ Player::Player(PlatformManager* pPlatManager): GameObject()
 	m_pImage = Global::sharedGlobal()->loadImage(RESOURCE_PLAYER);
 	
 	//Save pointer to Platform Manager and set jump height
-	m_pPlatManager = pPlatManager;
+	m_pPlatManager = &rPlatManager;
 	m_jump = INIT_JUMP; 
 	m_walk = INIT_WALK;     
     m_gravity = INIT_GRAVITY; 
 }
 
+//Handle the input accordingly so that the update can perform correctly
+void Player::handleInput(Uint32 deltaTicks)
+{	
+	//Get current state of keyboard
+	Uint8* pKeystates = SDL_GetKeyState(NULL);
+    
+    //Check if player is on the platform
+    bool onPlatform = m_pPlatManager->isOnPlatform(*this);
+	
+	//Adjust the velocity if a key was pressed
+	if(pKeystates[SDLK_LEFT])
+        m_xVel = -m_walk;
+	else if(pKeystates[SDLK_RIGHT])
+		m_xVel = m_walk;
+    else
+        m_xVel = 0;
+    
+    //Add friction to platforms
+    if(onPlatform && m_xVel > FRICTION)
+        m_xVel = FRICTION;
+    else if(onPlatform && m_xVel < -FRICTION)
+        m_xVel = -FRICTION;
+	
+    //Handle player jumps
+	if(onPlatform && pKeystates[SDLK_UP] && m_yVel >= 0)
+		m_yVel = -m_jump;
+}
 
-//Moves the player taking time elapsed into account
-bool Player::move(Uint32 deltaTicks)
+//Updates the player's state taking time elapsed into account
+bool Player::update(Uint32 deltaTicks)
 {
 	//Move the player LEFT or RIGHT 
 	m_x += m_xVel * ( deltaTicks / 1000.f );
@@ -71,17 +92,11 @@ bool Player::move(Uint32 deltaTicks)
 		m_xVel = 0;
 	}
 	
-	
-	//DEBUG
-	//printf("BEFORE: y = %f; \t yVel = %f\n", y, yVel);
-	//Move the player UP or DOWN
+    //Move the player UP or DOWN
 	m_y += m_yVel * ( deltaTicks / 1000.f );
 	
 	//Keep increasing the effect of gravity on player
 	m_yVel += m_gravity * ( deltaTicks / 1000.f );
-	//DEBUG
-	//printf("AFTER:  y = %f; \t yVel = %f\n\n", y, yVel);
-	
 	
     //If player touches the ground return false as its Game Over
 	if (m_y >= GROUND_HEIGHT){
@@ -92,7 +107,7 @@ bool Player::move(Uint32 deltaTicks)
 	else if (m_yVel >= 0){
 		
         //If player is going through a platform this returns the height of the platform
-		float yVelPlat = m_pPlatManager->throughPlatform(this, deltaTicks);
+		float yVelPlat = m_pPlatManager->throughPlatform(*this, deltaTicks);
 		
         //If player is going through platform set its height accordingly and set its yVel to that of the platform
 		if(yVelPlat >= CEILING){
@@ -101,7 +116,6 @@ bool Player::move(Uint32 deltaTicks)
 		}
 	}
 	
-	//printf("move() isOnPlatform(): %d\n", pManager->isOnPlatform(this));
 	return true;	
 }
 
@@ -121,93 +135,4 @@ const GameObject::CollisionBox Player::collisionBox(Uint32 deltaTicks)
 		col.y1 = col.y2;																	  //BOTTOM PART
 	
 	return col;
-}
-
-void Player::handleInput(Uint32 deltaTicks)
-{	
-	//Get current state of keyboard
-	Uint8* pKeystates = SDL_GetKeyState(NULL);
-    
-    //Check if player is on the platform
-    bool onPlatform = m_pPlatManager->isOnPlatform(this);
-	
-	//Adjust the velocity if a key was pressed
-	if(pKeystates[SDLK_LEFT])
-    {
-        m_xVel = -m_walk;
-    }
-	else if(pKeystates[SDLK_RIGHT])
-    {
-		m_xVel = m_walk;
-    }
-    
-    //Keep the momentum going even when player not holding direction key
-    /* TODO - Introduce Momentum if I think it is necessary!
-     else if (xVel < 0 && movingLeft && !onPlatform)
-     {
-     xVel += walk*(deltaTicks/1000.f);
-     printf("Left: %f, %d\n", xVel, movingLeft);
-     }
-     else if (xVel > 0 && !movingLeft && !onPlatform)
-     {
-     xVel -= walk*(deltaTicks/1000.f);
-     printf("Right: %f, %d\n", xVel, movingLeft);
-     }
-     */
-    else
-    {
-        m_xVel = 0;
-        //printf("Neither: %f, %d\n", xVel, movingLeft);
-    }
-    
-    
-    //printf("handleInput() isOnPlatform(): %d\n", pManager->isOnPlatform(this));
-    
-    //Add friction to platforms
-    if(onPlatform && m_xVel > FRICTION)
-        m_xVel = FRICTION;
-    else if(onPlatform && m_xVel < -FRICTION)
-        m_xVel = -FRICTION;
-	
-    //Handle player jumps
-	if(onPlatform && pKeystates[SDLK_UP] && m_yVel >= 0){
-		//printf("JUMPED\n");
-		m_yVel = -m_jump;
-	}
-}
-
-//Return jump
-int Player::getJump()
-{
-	return m_jump;
-}
-
-//Set jump
-void Player::setJump(int j)
-{
-	m_jump = j;
-}
-
-//Return gravity
-int Player::getGravity()
-{
-	return m_gravity;
-}
-
-//Set gravity
-void Player::setGravity(int g)
-{
-	m_gravity = g;
-}
-
-//Return walk
-int Player::getWalk()
-{
-	return m_walk;
-}
-
-//Set gravity
-void Player::setWalk(int w)
-{
-	m_walk = w;
 }

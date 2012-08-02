@@ -32,11 +32,11 @@ public:
 	void unpause();
 	
 	//Gets the timer's time
-	int getTicks();
+    int getTicks() const;
 	
 	//Checks the status of the timer
-	bool isStarted();
-	bool isPaused();
+	inline bool isStarted() const {return m_started;}
+	inline bool isPaused()  const {return m_paused; }
 };
 
 #endif

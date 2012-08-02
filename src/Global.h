@@ -35,6 +35,11 @@ const int SCREEN_HEIGHT = 480;
 const int SCREEN_BPP = 32;
 const int FRAMES_PER_SECOND = 60;
 
+//Update attributes
+const int UPDATES_PER_SECOND = 120;
+const int LIMIT_UPDATES = 4;  
+const float FIXED_TIME_STEP = 1000.0f/UPDATES_PER_SECOND;
+
 //The dimensions of the level 
 const int LEVEL_WIDTH = 640; 
 const int LEVEL_HEIGHT = 1368;
@@ -63,8 +68,15 @@ const int LARGE_FONT = 3;
 //Color attributes
 const int WHITE = 1;
 
+// Player Constants
+const int INIT_JUMP = 766;     //jump = 360;
+const int INIT_WALK = 736;     //walk = 400;
+const int INIT_GRAVITY = 3090; //gravity = 720;
+const int FRICTION = 400;
+
 //Platform attributes
 const int DISTANCE_BETWEEN_PLATFORMS = 100;
+const int INIT_PLAT_SPEED = 124;
 
 //Platform types
 const int SMALL_PLATFORM = 1;
@@ -88,7 +100,7 @@ private:
 	Global();
     
     //Initialisations
-    void initSDL();
+    void initSDL() const;
     void initFontsColors();
     void initMusic();
 	
@@ -97,17 +109,17 @@ public:
 	static Global* sharedGlobal();
 	
     //Font related functions
-    TTF_Font* getFont(int font);
-    SDL_Color getColor(int color);
+    TTF_Font* getFont(int font) const;
+    SDL_Color getColor(int color) const;
     
     //Music + volume related functions
-    inline Mix_Music* getMusic()   {return m_pMusic;}
-    inline bool getMuted()         {return m_muted;}
-    inline void muteUnMute()       {m_muted = !m_muted;}
+    inline Mix_Music* getMusic() const  {return m_pMusic;}
+    inline bool getMuted() const        {return m_muted;}
+    inline void muteUnMute()            {m_muted = !m_muted;}
     
 	//Global helper functions:
-	SDL_Surface* loadImage(std::string filename);
-	void applySurface(int x, int y, SDL_Surface* source, SDL_Surface* destination, SDL_Rect* clip = NULL);
+	SDL_Surface* loadImage(const std::string& filename) const;
+	void applySurface(int x, int y, SDL_Surface* pSource, SDL_Surface* pDestination, SDL_Rect* clip = NULL) const;
 };
 
 #endif

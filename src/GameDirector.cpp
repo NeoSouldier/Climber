@@ -16,7 +16,6 @@
 #include "SDL_image.h"
 #include "SDL_ttf.h"
 #include "SDL_mixer.h"
-#include "Timer.h"
 
 //Statics need their memory initialised in cpp files
 GameDirector* GameDirector::ms_pDirector(0);
@@ -154,10 +153,11 @@ bool GameDirector::playingLoop()
 	PlatformManager platManager;
 	
 	//Player
-	Player player(&platManager);
+	Player player(platManager);
 	
 	//Time related variables
 	Timer frame, delta;
+    int dtAccumulator = 0; //Used for keeping the game updating at discrete FIXED_TIME_STEP's
 	double delay = 0;
 	int frameSkip = 0;
 	
@@ -203,44 +203,22 @@ bool GameDirector::playingLoop()
 			}
 		}
 		
-		//Handle player events for the player
-		player.handleInput(delta.getTicks());
-		
-		
 		/***** LOGIC *******/
-		
-        //Update the background speed
-        m_pScene->updateInGame(delta.getTicks(), platManager, m_fps, m_seconds);
         
-		//Move the platform(s) and add platform if necessary, ignoring addPlatform return value but could use it
-		platManager.move(delta.getTicks());
-		platManager.addPlatform();
+        //If the update function returns false the player has died and its GAMEOVER
+        if (!update(player, platManager, delta.getTicks(), dtAccumulator))
+            break;
 		
-		//Move the player, if this returns false he has landed on the floor and its GAMEOVER
-		if(!player.move(delta.getTicks()))
-			break;
-		
-		//Restart delta timer
-		delta.start();
-		
+        //Restart delta timer
+		delta.start(); 
+        
 		/****** RENDERING *******/
 		
-		//Apply the background, fps, score and whether we are muted or not
-        m_pScene->applyInGame(m_pScreen, m_fps, m_seconds);
-		
-		//Show the platform(s) on the screen
-		platManager.show(m_pScreen);
-		
-		//Show the player on the screen
-		player.show(m_pScreen);
-		
-		//NOTE: Flipping the screen reduces the time to 60fps automatically due to VSYNC!
-		if( SDL_Flip( m_pScreen ) == -1 )
-			exit(1);
-		
+        //Render as necessary
+        render(player, platManager);
 		
 		/***** HOUSEKEEPING *****/
-		
+        
 		//If we need to cap the frame rate sleep the remaining frame time 
 		//NOTE: unnecessary at 60fps due to SDL_Flip() and VSYNC ensuring it stays at 60fps
 		if( frame.getTicks() < 1000 / FRAMES_PER_SECOND){
@@ -253,12 +231,82 @@ bool GameDirector::playingLoop()
 		//Once per second block
 		if( ++frameSkip >= FRAMES_PER_SECOND )
 		{
-			oncePerSecond(delay, &platManager, &player);
+			oncePerSecond(delay, platManager, player);
 			frameSkip = delay = 0;
 		}
 	}
 	
 	return game;
+}
+
+//Updates game logic with a fixed-time step, returns false if its GAMEOVER
+bool GameDirector::update(Player& rPlayer, PlatformManager& rPlatManager, int dt, int& dtAccumulator)
+{
+    bool result = true;
+    
+    //Loop through updating as many times as required, will only update at most LIMIT_UPDATES times
+    int updates = 0;
+    for(; dt >= FIXED_TIME_STEP && updates < LIMIT_UPDATES && result; dt -= FIXED_TIME_STEP, updates++)
+        result = updateActual(rPlayer, rPlatManager);        
+    
+    //Accumulate remaining ticks left between frames
+    //if the game froze for some reason dtAccumulator = 0 so we don't "play catch up" in the next few frames
+    if (updates < LIMIT_UPDATES)
+        dtAccumulator += dt;
+    else
+        dtAccumulator = 0;
+    
+    //Once this has accumulated past a FIXED_TIME_STEP, then update the game logic once again
+    if (dtAccumulator >= FIXED_TIME_STEP && result)
+    {
+        result = updateActual(rPlayer, rPlatManager);        
+        dtAccumulator -= FIXED_TIME_STEP;
+    }
+        
+    return result;
+}
+
+//Actually updates the game logic
+bool GameDirector::updateActual(Player& rPlayer, PlatformManager& rPlatManager)
+{
+    bool result = true;
+    
+    //Handle player events for the player
+    rPlayer.handleInput(FIXED_TIME_STEP);
+    
+    //Update the background speed
+    m_pScene->updateInGame(FIXED_TIME_STEP, rPlatManager, m_fps, m_seconds);
+    
+    //Move the platform(s) and add platform if necessary
+    rPlatManager.update(FIXED_TIME_STEP);
+    rPlatManager.addPlatform();
+    
+    //Move the player, if this returns false he has landed on the floor and its GAMEOVER
+    if(!rPlayer.update(FIXED_TIME_STEP))
+        result = false;
+    
+    return result;;
+}
+
+//Renders all the assets as necessary, currently return value is just ignored
+bool GameDirector::render(Player& rPlayer, PlatformManager& rPlatManager)
+{
+    bool result = true;
+    
+    //Apply the background, fps, score and whether we are muted or not
+    m_pScene->renderInGame(m_pScreen, m_fps, m_seconds);
+    
+    //Show the platform(s) on the screen
+    rPlatManager.render(m_pScreen);
+    
+    //Show the player on the screen
+    rPlayer.render(m_pScreen);
+    
+    //NOTE: Flipping the screen reduces the time to 60fps automatically due to VSYNC!
+    if( SDL_Flip( m_pScreen ) == -1 )
+        exit(1);
+    
+    return result;
 }
 
 
@@ -269,7 +317,7 @@ bool GameDirector::mainMenu()
 	bool game = true;
 	
     //Apply the main menu scene
-    m_pScene->applyInMainMenu(m_pScreen);
+    m_pScene->renderInMainMenu(m_pScreen);
 	
 	//Set mainmenuEventFilter
 	SDL_SetEventFilter(mainmenuEventFilter);
@@ -333,7 +381,7 @@ bool GameDirector::gameOver()
     Mix_FadeOutMusic( 2000 );
 	
     //Apply the game over scene
-    m_pScene->applyInGameOver(m_pScreen, m_seconds);
+    m_pScene->renderInGameOver(m_pScreen, m_seconds);
 	
 	//Set gameoverEventFilter
 	SDL_SetEventFilter(gameoverEventFilter);
@@ -358,14 +406,14 @@ bool GameDirector::gameOver()
 }
 
 //Per second block
-void GameDirector::oncePerSecond(float delay, PlatformManager* pPlatManager, Player* pPlayer)
+void GameDirector::oncePerSecond(float delay, PlatformManager& rPlatManager, Player& rPlayer)
 {	
 	//Adjust falling platforms
-	pPlatManager->clearInvisible();
+	rPlatManager.clearInvisible();
 
 	//Adjust score and fps counters
     m_seconds++;
-	m_fps = (FRAMES_PER_SECOND*1000)/delay;
+	m_fps = (FRAMES_PER_SECOND*1000.0f)/delay;
 
 	/* DEBUG */
     /*
@@ -384,12 +432,12 @@ void GameDirector::oncePerSecond(float delay, PlatformManager* pPlatManager, Pla
     //After every 10 seconds speed up the game, upper limit of 8 multiplying
     if((m_seconds % 10) == 0 && m_seconds <= 80 )
     {	
-        pPlayer->setWalk(pPlayer->getWalk()*1.08);
-        pPlayer->setJump(pPlayer->getJump()*1.1);
-        pPlayer->setGravity(pPlayer->getGravity()*1.2);
-        pPlatManager->setSpeed(pPlatManager->getSpeed()*1.1); 
+        rPlayer.setWalk(rPlayer.getWalk()*1.08);
+        rPlayer.setJump(rPlayer.getJump()*1.1);
+        rPlayer.setGravity(rPlayer.getGravity()*1.2);
+        rPlatManager.setSpeed(rPlatManager.getSpeed()*1.1); 
         printf("TIME: %d - Speed: %d, Jump: %d, Gravity: %d, Walk: %d\n", 
-                    m_seconds, pPlatManager->getSpeed(), pPlayer->getJump(),pPlayer->getGravity(), pPlayer->getWalk());
+                    m_seconds, rPlatManager.getSpeed(), rPlayer.getJump(),rPlayer.getGravity(), rPlayer.getWalk());
 	}
 }
 

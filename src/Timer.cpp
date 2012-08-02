@@ -53,30 +53,17 @@ void Timer::unpause()
 	}
 }
 
-int Timer::getTicks()
+int Timer::getTicks() const
 {
 	//If the timer is running
 	if( m_started == true )
 	{
-		
 		if( m_paused == true )
 			return m_pausedTicks;
-
 		else
 			return SDL_GetTicks() - m_startTicks;
-		
 	}
 	
 	//If the timer isn't running
 	return 0;
-}
-
-bool Timer::isStarted()
-{
-	return m_started;
-}
-
-bool Timer::isPaused()
-{
-	return m_paused;
 }

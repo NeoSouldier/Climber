@@ -17,7 +17,6 @@ class Path
 public:
     
     static std::string pathForFile(const std::string& filename);
-    
 };
 
 

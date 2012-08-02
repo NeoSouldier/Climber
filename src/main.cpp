@@ -6,10 +6,6 @@
 /*
  TODO:
  
- - Use Source Control!
- - Fixed interval time - step for Logic Update and Variable interval for Rendering -> Decouples Logic from Rendering
- - Run through profiler! Find out any issues - eg mem leaks.
- - Refactor code, mostly done already... (update + render/show/apply AND add "const" and "&" where it seems useful)
  - Should Platforms look after loading their own images statically? It would remove the Cyclic Forward Declarations between Platform and PlatformManager...
  - Compile on different platforms!
  

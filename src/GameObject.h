@@ -29,12 +29,6 @@ protected:
 	SDL_Surface* m_pImage;
 
 public:
-
-    //Constructor just for good practice
-    GameObject()
-    {
-        m_pImage = NULL;
-    }
 	
     //Virtual destructor to avoid memory leaks when classes inheriting from GameObject are destroyed
     virtual ~GameObject(){}
@@ -55,22 +49,19 @@ public:
 	const CollisionBox virtual collisionBox(Uint32 deltaTicks = 0) = 0;
 	
 	//Moves the object, returns true on success - MUST be implemented by actual object 
-	bool virtual move(Uint32 deltaTicks) = 0;
+	bool virtual update(Uint32 deltaTicks) = 0;
 	
 	//Shows the object on the screen
-	void show(SDL_Surface* pScreen);
-    
-    //Sets the camera over the dot 
-    void setCamera();
+	void render(SDL_Surface* pScreen) const;
 	
 	//Returns dimensions of object
 	//NOTE: Height and Width return -1 if the image failed to load
-	float getX();
-	float getY();
-	float getXVel();
-	float getYVel();
-	int getHeight();
-	int getWidth();
+	inline float getX()      const {return m_x;   }
+	inline float getY()      const {return m_y;   }
+	inline float getXVel()   const {return m_xVel;}
+	inline float getYVel()   const {return m_yVel;}
+	inline int   getHeight() const {return m_pImage!=NULL ? m_pImage->h : -1 ;}
+	inline int   getWidth()  const {return m_pImage!=NULL ? m_pImage->w : -1 ;}
 };
 
 #endif

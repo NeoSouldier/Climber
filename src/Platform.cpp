@@ -10,27 +10,28 @@
 #include "Platform.h"
 #include "Global.h"
 
+SDL_Surface *Platform::ms_pSmall (Global::sharedGlobal()->loadImage(RESOURCE_SMALL_PLATFORM) );
+SDL_Surface *Platform::ms_pMedium(Global::sharedGlobal()->loadImage(RESOURCE_MEDIUM_PLATFORM));
+SDL_Surface *Platform::ms_pLarge (Global::sharedGlobal()->loadImage(RESOURCE_LARGE_PLATFORM) );
+
 //Initialise platform variables
-Platform::Platform(PlatformManager& rPlatManager, int speed, int initialX, int initialY): GameObject()
+Platform::Platform(int speed, int initialX, int initialY)
 {	
 	//Gives platform a random picture, sizes 96,128,160 pixels width
 	/*imgSize VARIABLE IS USED FOR 2 THINGS: 
 	 (1): DECIDING WHICH SIZE THE PLATFORM SHOULD BE
 	 (2): ALLOWING THE VALUE OF THE PLATFORM TO BE FURTHER RIGHT IF PLATFORM IS SMALLER*/
-    
-	//NOTE: UNSURE IF THIS IS THE BEST WAY TO DO IT
-    //Loading a new image every time also seems expensive and might be causing the leaks
 	int imgSize = rand() % 3;
 	switch (imgSize)
 	{
 		case 2:
-			m_pImage = rPlatManager.getPlatformImage(SMALL_PLATFORM);
+			m_pImage = ms_pSmall;
 			break;
 		case 1:
-			m_pImage = rPlatManager.getPlatformImage(MEDIUM_PLATFORM);
+			m_pImage = ms_pMedium;
 			break;
 		case 0:
-			m_pImage = rPlatManager.getPlatformImage(LARGE_PLATFORM);
+			m_pImage = ms_pLarge;
 			break;
 	}
 	
@@ -50,8 +51,8 @@ Platform::Platform(PlatformManager& rPlatManager, int speed, int initialX, int i
 	m_xVel = 0;
 }
 
-//Moves the platform vertically 
-bool Platform::move(Uint32 deltaTicks)
+//Updates the platforms position
+bool Platform::update(Uint32 deltaTicks)
 {
 	//Move platform down
 	m_y += m_yVel * ( deltaTicks / 1000.f );
@@ -89,9 +90,9 @@ bool Platform::isVisible()
 #pragma mark CollisionDetection
 
 //Returns true if the object is on this platform - very abstract, as it compares collision boxes which are abstract concepts
-bool Platform::onPlatform(GameObject* pObject)
+bool Platform::onPlatform(GameObject& rObject)
 {
-	const CollisionBox objCol = pObject->collisionBox();
+	const CollisionBox objCol = rObject.collisionBox();
 	const CollisionBox platCol = this->collisionBox();
 	
 	//Check if object box is inside the platform box
@@ -100,15 +101,15 @@ bool Platform::onPlatform(GameObject* pObject)
 }
 
 //Returns the platforms y value if the object has just gone through it, -1 otherwise
-float Platform::throughPlatform(GameObject* pObject, Uint32 deltaTicks)
+float Platform::throughPlatform(GameObject& rObject, Uint32 deltaTicks)
 {
-	const CollisionBox objCol  = pObject->collisionBox(deltaTicks);
+	const CollisionBox objCol  = rObject.collisionBox(deltaTicks);
 	const CollisionBox platCol = this->collisionBox();
 	
 	//The platform is considered as a single line, only its top y value is used
 	if(objCol.y1 <= platCol.y1 && platCol.y1 <= objCol.y2 &&
 		 platCol.x1 <= objCol.x2 && objCol.x1 <= platCol.x2){
-		return (m_y+11 - pObject->getHeight());
+		return (m_y+11 - rObject.getHeight());
 	}
 	
 	return CEILING -1;

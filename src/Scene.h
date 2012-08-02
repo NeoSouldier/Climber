@@ -41,10 +41,10 @@ public:
     void updateInGame(Uint32 deltaTicks, PlatformManager& pManager, float fps, int sc);
     void resetScene();
     
-    //Apply methods for rendering in different parts of the game
-    void applyInMainMenu(SDL_Surface* pScreen);
-    void applyInGame(SDL_Surface* pScreen, float fps, int sc); 
-    void applyInGameOver(SDL_Surface* pScreen, int sc);
+    //Render methods for each part of the game
+    void renderInMainMenu(SDL_Surface* pScreen);
+    void renderInGame(SDL_Surface* pScreen, float fps, int sc); 
+    void renderInGameOver(SDL_Surface* pScreen, int sc);
 };
 
 #endif

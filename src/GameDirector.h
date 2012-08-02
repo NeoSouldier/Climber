@@ -16,6 +16,7 @@
 #include "Player.h"
 #include "Global.h"
 #include "Scene.h"
+#include "Timer.h"
 
 class GameDirector 
 {
@@ -32,7 +33,7 @@ private:
 	//Surfaces to be used
 	SDL_Surface *m_pScreen, *m_pPause;
 	
-	//Seconds alive and frame rate
+	//Seconds alive, frame rate and accumulator
 	int m_seconds;  //This also represents the score
 	float m_fps;
 	
@@ -46,9 +47,12 @@ private:
     //Main Game functions
     bool mainMenu();
 	bool playingLoop();
+    bool update(Player& rPlayer, PlatformManager& rPlatManager, int dt, int& dtAccumulator);
+    bool updateActual(Player& rPlayer, PlatformManager& rPlatManager);
+    bool render(Player& rPlayer, PlatformManager& rPlatManager);
 	bool pauseGame();
 	bool gameOver();
-    void oncePerSecond(float delay, PlatformManager* pPlatManager, Player* pPlayer);
+    void oncePerSecond(float delay, PlatformManager& rPlatManager, Player& rPlayer);
     inline void resetSeconds() {m_seconds = 0;}
 
     //Event Filters

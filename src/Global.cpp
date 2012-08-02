@@ -35,7 +35,7 @@ Global::Global()
 #pragma mark -
 #pragma mark Initialisation
 
-void Global::initSDL()
+void Global::initSDL() const
 {
     //Initialise all SDL subsystems
 	if ( SDL_Init (SDL_INIT_EVERYTHING) < 0 ) {
@@ -93,7 +93,7 @@ void Global::initMusic()
 #pragma mark FontFunctions
 
 //Return desired font size
-TTF_Font* Global::getFont(int font)
+TTF_Font* Global::getFont(int font) const
 {
     switch (font) 
     {
@@ -116,7 +116,7 @@ TTF_Font* Global::getFont(int font)
 }
 
 //Return desired color
-SDL_Color Global::getColor(int color)
+SDL_Color Global::getColor(int color) const
 {
     switch (color) 
     {
@@ -135,7 +135,7 @@ SDL_Color Global::getColor(int color)
 #pragma mark GlobalHelpers
 
 //Returns optimized image when loading
-SDL_Surface* Global::loadImage(std::string filename)
+SDL_Surface* Global::loadImage(const std::string& filename) const
 {
 	SDL_Surface* pLoadedImage = NULL;
 	SDL_Surface* pOptimizedImage = NULL;
@@ -156,7 +156,7 @@ SDL_Surface* Global::loadImage(std::string filename)
 }
 
 //Blit source image onto destination - clip can be used for sprite sheets
-void Global::applySurface(int x, int y, SDL_Surface* pSource, SDL_Surface* pDestination, SDL_Rect* pClip)
+void Global::applySurface(int x, int y, SDL_Surface* pSource, SDL_Surface* pDestination, SDL_Rect* pClip) const
 {
 	SDL_Rect offset;
 	offset.x = x;

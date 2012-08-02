@@ -157,8 +157,8 @@ void Scene::resetScene()
 //--------------------------------------------------------------------------
 
 
-// Applies the background in the main menu
-void Scene::applyInMainMenu(SDL_Surface* pScreen)
+// Renders the background in the main menu
+void Scene::renderInMainMenu(SDL_Surface* pScreen)
 {
     //Place background and Write Climber onto screen
     m_pGlobal->applySurface( 0, 0, m_pBackgroundImage, pScreen);
@@ -174,21 +174,24 @@ void Scene::applyInMainMenu(SDL_Surface* pScreen)
 }
 
 
-// Applies the scrolling background for in-game
-void Scene::applyInGame(SDL_Surface* pScreen, float fps, int sc)
+// Renders the scrolling background for in-game
+void Scene::renderInGame(SDL_Surface* pScreen, float fps, int sc)
 {
-    //Apply background twice to give illusion of 
+    //Apply background twice to give illusion of scrolling backgrounds
     m_pGlobal->applySurface( m_bgX, m_bgY, m_pBackgroundImage, pScreen);
     m_pGlobal->applySurface( m_bgX, m_bgY - LEVEL_HEIGHT, m_pBackgroundImage, pScreen);
     
+    //Render the frame rate and score
     m_pGlobal->applySurface( 10, 0, m_pFrames, pScreen );
     m_pGlobal->applySurface( SCREEN_WIDTH - m_pScore->w -10, 0, m_pScore, pScreen );
     
-    if (m_pGlobal->getMuted()) m_pGlobal->applySurface( SCREEN_WIDTH - m_pMutedIcon->w - 12, SCREEN_HEIGHT - 50, m_pMutedIcon, pScreen );
+    //Render the mute icon if necessary
+    if (m_pGlobal->getMuted()) 
+        m_pGlobal->applySurface( SCREEN_WIDTH - m_pMutedIcon->w - 12, SCREEN_HEIGHT - 50, m_pMutedIcon, pScreen );
 }
 
-// Applies the background in the game over scene
-void Scene::applyInGameOver(SDL_Surface* pScreen, int sc)
+// Renders the background in the game over scene
+void Scene::renderInGameOver(SDL_Surface* pScreen, int sc)
 {
     //Replace with the gameover background and write game over
     m_pGlobal->applySurface( 0, 0, m_pBackgroundImage, pScreen); 

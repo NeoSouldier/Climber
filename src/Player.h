@@ -20,11 +20,11 @@ private:
 	PlatformManager* m_pPlatManager;
 	
 	//How many pixels the player can jump, walk and gravity imposed on him all in terms of pixels
-	int m_jump, m_walk, m_gravity;
+	int m_jump, m_gravity, m_walk;
 	
 public:
 	//Initialises the variables
-	Player(PlatformManager* manager);
+	Player(PlatformManager& rPlatManager);
     
     //Destructor
     ~Player()
@@ -32,26 +32,26 @@ public:
         SDL_FreeSurface(m_pImage);
     }
     
-    //Moves the player, if he is on the ground return false, otherwise true
-	bool virtual move(Uint32 deltaTicks);
-	
-	//Returns the collision box for the player
-	const virtual CollisionBox collisionBox(Uint32 deltaTicks = 0);
-	
     //Takes key presses and adjusts the player's velocity
 	void handleInput(Uint32 deltaTicks);
     
+    //Moves the player, if he is on the ground return false, otherwise true
+	bool virtual update(Uint32 deltaTicks);
+	
+	//Returns the collision box for the player
+	const virtual CollisionBox collisionBox(Uint32 deltaTicks = 0);
+    
 	//Get and Set for jump
-	int getJump();
-	void setJump(int j);
+	inline int getJump() const  { return m_jump;}
+	inline void setJump(int j)  { m_jump = j;   }
 	
 	//Get and Set for gravity
-	int getGravity();
-	void setGravity(int g);
+    inline int getGravity() const { return m_gravity;}  
+	inline void setGravity(int g) { m_gravity = g;   }
 	
 	//Get and Set for walk
-	int getWalk();
-	void setWalk(int w);
+	inline int getWalk() const { return m_walk;}  
+	inline void setWalk(int w) { m_walk = w;   }
 	
 };
 
