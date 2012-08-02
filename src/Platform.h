@@ -20,6 +20,9 @@ public:
 	//Constructor, allows x to be set originally
 	Platform(int speed, int initialX = -1, int initialY = -1);
 	
+    //Initialises the static surfaces accordingly
+    void initPlatformImages();
+    
 	//Moves the platform
 	bool virtual update(Uint32 deltaTicks);
 	

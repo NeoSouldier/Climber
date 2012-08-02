@@ -10,14 +10,18 @@
 #include "Platform.h"
 #include "Global.h"
 
-SDL_Surface *Platform::ms_pSmall (Global::sharedGlobal()->loadImage(RESOURCE_SMALL_PLATFORM) );
-SDL_Surface *Platform::ms_pMedium(Global::sharedGlobal()->loadImage(RESOURCE_MEDIUM_PLATFORM));
-SDL_Surface *Platform::ms_pLarge (Global::sharedGlobal()->loadImage(RESOURCE_LARGE_PLATFORM) );
+SDL_Surface *Platform::ms_pSmall (0);
+SDL_Surface *Platform::ms_pMedium(0);
+SDL_Surface *Platform::ms_pLarge (0);
 
 //Initialise platform variables
 Platform::Platform(int speed, int initialX, int initialY)
 {	
-	//Gives platform a random picture, sizes 96,128,160 pixels width
+    //The first time a platform is created all the surfaces needed to be correctly initalised
+    if (ms_pSmall == 0 || ms_pMedium == 0 || ms_pLarge == 0)
+        initPlatformImages();
+    
+	//Gives platform a random image, sizes 96,128,160 pixels width
 	/*imgSize VARIABLE IS USED FOR 2 THINGS: 
 	 (1): DECIDING WHICH SIZE THE PLATFORM SHOULD BE
 	 (2): ALLOWING THE VALUE OF THE PLATFORM TO BE FURTHER RIGHT IF PLATFORM IS SMALLER*/
@@ -49,6 +53,20 @@ Platform::Platform(int speed, int initialX, int initialY)
 	//Platforms do not move horizontally so xVel = 0, speed is constant on platforms unlike the player
 	m_yVel = speed;
 	m_xVel = 0;
+}
+
+//Initialise all the static surfaces for the different types of platforms
+void Platform::initPlatformImages()
+{
+    ms_pSmall  = Global::sharedGlobal()->loadImage(RESOURCE_SMALL_PLATFORM) ;
+    ms_pMedium = Global::sharedGlobal()->loadImage(RESOURCE_MEDIUM_PLATFORM);
+    ms_pLarge  = Global::sharedGlobal()->loadImage(RESOURCE_LARGE_PLATFORM);
+    
+    if (ms_pSmall == NULL || ms_pMedium == NULL || ms_pLarge == NULL) {
+		printf("Could not load platform images correctly: %s\n", SDL_GetError());
+		SDL_Quit();
+		exit(1);
+	}
 }
 
 //Updates the platforms position
